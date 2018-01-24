@@ -1,0 +1,502 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src * data:; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
+  <!--<script src="components/loader.js"></script>-->
+  <script src="lib/angular/angular.min.js"></script>
+  <script src="lib/onsenui/js/onsenui.min.js"></script>
+  <script src="lib/onsenui/js/angular-onsenui.min.js"></script>
+  <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/4.1.0/firebase.js"></script>
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css"/>
+  <link rel="stylesheet" href="components/loader.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsenui.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsen-css-components.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+  var map;
+  var mappa_attiva = false;
+  var lat = 45.4217;
+  var lng = 12.3356;
+  var zoom = 13;
+  var config = {
+    apiKey: "AIzaSyDn-zApl0whHDB_kLTlh5_fvqWH5WVW3T8",
+    authDomain: "angel-6902f.firebaseapp.com",
+    databaseURL: "https://angel-6902f.firebaseio.com",
+    projectId: "angel-6902f",
+    storageBucket: "angel-6902f.appspot.com",
+    messagingSenderId: "306707852817"
+  };
+  firebase.initializeApp(config);
+  const auth = firebase.auth();
+
+var Fire = function(){
+  console.log("entro");
+  const auth = firebase.auth();
+  const txtEmail = document.getElementById('txtEmail');
+  const txtPassword = document.getElementById('txtPassword');
+  const btnLogin = document.getElementById('btnLogin');
+  const btnSingUp = document.getElementById('btnSingUp');
+  const btnLogout = document.getElementById('btnLogout');
+
+
+    btnLogin.addEventListener('click',e => {
+      const email = txtEmail.value;
+      const pass = txtPassword.value;
+      const promise = auth.signInWithEmailAndPassword(email,pass);
+      promise.then(function(){
+        document.getElementById("c").style.visibility = "hidden"
+      });
+    })
+
+    btnSingUp.addEventListener('click',e => {
+      const email = txtEmail.value;
+      const pass = txtPassword.value;
+      const promise = auth.createUserWithEmailAndPassword(email,pass);
+      promise.catch(e => console.log(e.message));
+    })
+   auth.onAuthStateChanged(firebaseUser => {
+    if(firebaseUser){
+       console.log(firebaseUser);
+    }else{
+     console.log('not logged in');
+     }
+   })
+}
+
+var provider = new firebase.auth.FacebookAuthProvider();
+var providerG = new firebase.auth.GoogleAuthProvider();
+
+function googleSignin() {
+  auth.signInWithPopup(providerG).then(function(result) {
+      var token = result.credential.accessToken;
+      var user = result.user;
+      console.log(token)
+      console.log(user)
+      document.getElementById("c").style.visibility = "hidden";
+   }).catch(function(error) {
+      console.log(error.code)
+      console.log(error.message)
+   });
+}
+function googleSignout() {
+   auth.signOut()
+   .then(function() {
+      console.log('Signout Succesfull')
+   }, function(error) {
+      console.log('Signout Failed')
+   });
+}
+function facebookSignin() {
+   auth.signInWithPopup(provider)
+
+   .then(function(result) {
+      var token = result.credential.accessToken;
+      var user = result.user;
+      document.getElementById("c").style.visibility = "hidden";
+      console.log(token)
+      console.log(user)
+   }).catch(function(error) {
+      console.log(error.code) ;
+      console.log(error.message) ;
+   });
+}
+
+window.fbAsyncInit = function() {
+      FB.init({
+         appId      : '427469474303607',
+         xfbml      : true,
+         version    : 'v2.6'
+      });
+   };
+
+   (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s) [0];
+      if (d.getElementById(id) ) {return;}
+      js = d.createElement(s) ; js.id = id;
+      js.src = "//connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs) ;
+   }(document, 'script', 'facebook-jssdk') );
+
+  var hideDialog = function(id) {
+    document
+      .getElementById(id)
+      .hide();
+  };
+
+  ons.bootstrap()
+    .controller('AppController', function($scope, $q) {
+      var app = this;
+
+      app.load = function(page) {
+        var deferred = $q.defer();
+        $scope.splitter.content.load(page)
+          .then(function(){ console.log('caricato'); deferred.resolve('pippo'); });
+        $scope.splitter.left.close();
+        return deferred;
+      };
+
+      app.caricaMappa = function(){
+        console.log("1");
+         map = L.map('map').setView([lat,lng], zoom);
+
+        L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+          minZoom: 13
+        }).addTo(map);
+      };
+      app.Signal = function(){
+        app.load('signal.html');
+      };
+
+      Registrazione = function(){
+        app.load('registrazione.html');
+      };
+
+
+      app.toggle = function() {
+        if(mappa_attiva == true){
+          SetMapOnclose();
+          console.log("qua copio le cose");
+        }
+        $scope.splitter.left.toggle();
+      };
+
+      app.pippo = function(){
+        app.load('home.html');
+        //app.caricaMappa();
+        setTimeout(function(){
+          app.caricaMappa();
+          mappa_attiva = true;
+        }, 500);
+      };
+      setTimeout(function(){
+        app.caricaMappa();
+        mappa_attiva = true;
+      },1500);
+    });
+
+    ons.ready(function() {
+      console.log("Onsen UI is ready!");
+    });
+
+
+
+    var codeAddress = function(){
+      console.log(Name);
+      document.getElementById("MyEdit").innerHTML = Name;
+    };
+
+    var SetMapOnclose = function(){
+       var center = map.getCenter();
+       lat = center.lat;
+       lng = center.lng;
+       zoom = map.getZoom();
+
+     }
+
+     var showDialog = function (id) {
+       document
+         .getElementById(id)
+         .show();
+     };
+
+     var LeafIcon = L.Icon.extend({
+    options: {
+
+        iconSize:     [38, 95],
+        iconAnchor:   [22, 94],
+        popupAnchor:  [-3, -76]
+    }
+  });
+
+ var exclamation = new LeafIcon({iconUrl: 'Signal/exclamation.png'}),
+    garbage = new LeafIcon({iconUrl: 'Signal/garbage.png'}),
+    burn = new LeafIcon({iconUrl: 'Signal/burn.png'});
+
+    L.icon = function (options) {
+        return new L.Icon(options);
+    };
+
+    aggiungiicona = function(options){
+     L.marker([45.4349, 12.3341], {icon: options}).addTo(map).bindPopup("...");
+   };
+  </script>
+
+</head>
+<body onload="Fire()">
+  <ons-screen id="c" page="login.html" >
+    <ons-page>
+      <br /><br />
+        <ons-toolbar>
+          <div class="center">InputApp</div>
+<<<<<<< HEAD
+      </ons-toolbar>
+        <div class = "container" >
+        <input id="txtEmail" type="email" placeholder="Email" style="position: absolute;height: 6%;width: 73%;left: 12%;top: 4%;">
+        <input id="txtPassword" type="password" placeholder="Password"style="position:absolute;height: 6%;width: 73%;left: 12%;top: 12%;">
+        <ons-button id="btnLogin" class="btn btn-action" style="left:25%; position: absolute;top:21%;background-color: rgba(220, 28, 45, 0.81);">
+        Accedi
+        </ons-button>
+        <ons-button id="btnSingUp" class="btn btn-secandary"style="right:25%;position: absolute;top:21%;background-color: rgba(220, 28, 45, 0.81);">
+        Registrati
+      </ons-button>
+        <ons-button id="btnLogout" class="btn btn-action hide"style="right:200%;position: absolute;button:100%">
+        log out
+        </ons-button>
+
+        <ons-button onclick = "facebookSignin() " style="position: absolute; top: 39%; right: 31%;background-color:#4f7ac7 ;">Facebook Signin</ons-button>
+
+  <html lang="en">
+  <head>
+    <meta name="google-signin-scope" content="profile email">
+    <meta name="google-signin-client_id" content="YOUR_CLIENT_ID.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+  </head>
+  <body>
+    <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
+
+  </body>
+</html>
+=======
+>>>>>>> 7a46efa33b5f55c2357fecb48198c5af2aaa15db
+
+            </ons-toolbar>
+              <div class = "container" >
+                  <input id="txtEmail" type="email" placeholder="Email" style="position: absolute;height: 6%;width: 73%;left: 12%;top: 4%;">
+                  <input id="txtPassword" type="password" placeholder="Password"style="position:absolute;height: 6%;width: 73%;left: 12%;top: 12%;">
+                  <ons-button id="btnLogin" class="btn btn-action" style="left:25%; position: absolute;top:21%">
+                    log in
+                  </ons-button>
+                  <ons-button id="btnSingUp" class="btn btn-secandary"style="right:25%;position: absolute;top:21%">
+                    sing up
+                  </ons-button>
+                  <ons-button onclick = "facebookSignin() " style="position: absolute; top: 39%; right: 31%;background-color:#4f7ac7 ;">Facebook Signin</ons-button>
+                  <ons-button onclick = "googleSignin()" style="position : absolute; top:31%; right:33%; background-color:red;">Google Signin</ons-button>
+              </div>
+    </ons-page>
+ </ons-screen>
+
+  <ons-splitter ng-controller="AppController as app" var="splitter">
+    <ons-splitter-side side="left" width="220px" collapse swipeable>
+      <ons-page>
+
+        <ons-list>
+          <ons-list-item ng-click="app.pippo()" tappable>
+            Home
+          </ons-list-item>
+          <ons-list-item ng-click="app.load('settings.html')" tappable>
+            Settings
+          </ons-list-item>
+          <ons-list-item ng-click="app.load('about.html')" tappable>
+            About
+          </ons-list-item>
+        </ons-list>
+      </ons-page>
+    </ons-splitter-side>
+    <ons-splitter-content page="home.html"></ons-splitter-content>
+  </ons-splitter>
+
+  <ons-template id="home.html">
+    <ons-page>
+      <ons-toolbar>
+        <div class="left">
+          <ons-toolbar-button ng-click="app.toggle()">
+            <ons-icon icon="md-menu"></ons-icon>
+          </ons-toolbar-button>
+        </div>
+        <div class="center">
+          Main
+        </div>
+      </ons-toolbar>
+      <p style="text-align: center; opacity: 0.6; padding-top: 20px;">
+        Swipe right to open the menu!
+      </p>
+      <div id="map" class="Map" style="position:fixed;left:0px;top:15%;height:100%;width:100%;z-index: 12;">
+      </div>
+    <ons-fab position="bottom right" ng-click="app.Signal()">
+    <ons-icon icon="md-plus"></ons-icon>
+  </ons-fab>
+    </ons-page>
+  </ons-template>
+
+  <ons-template id="settings.html">
+    <ons-page>
+      <ons-toolbar>
+        <div class="left">
+          <ons-toolbar-button ng-click="app.toggle()">
+            <ons-icon icon="md-menu"></ons-icon>
+          </ons-toolbar-button>
+        </div>
+        <div class="center">
+          Settings
+        </div>
+      </ons-toolbar>
+      <ons-list-header>Information</ons-list-header>
+  <ons-list-item modifier="nodivider"> Username: <div id="MyEdit"></div></ons-list-item>
+    <ons-button onclick="codeAddress()" style="display: flex">name</ons-button>
+     </ons-page>
+    </ons-template>
+
+  <ons-template id="about.html">
+    <ons-page>
+      <ons-toolbar>
+        <div class="left">
+          <ons-toolbar-button ng-click="app.toggle()">
+            <ons-icon icon="md-menu"></ons-icon>
+          </ons-toolbar-button>
+        </div>
+        </ons-toolbar>
+        <div class="center">
+          <ons-list>
+                  <ons-list-header>Help</ons-list-header>
+                  <ons-list-item tappable onclick="showDialog('dialog-1')">A cosa serve?</ons-list-item>
+                  <ons-list-item tappable onclick="showDialog('dialog-2')">Come funziona?</ons-list-item>
+                  <ons-list-item tappable onclick="showDialog('dialog-3')">Produttori</ons-list-item>
+                  <ons-list-item tappable onclick="showDialog('dialog-4')">Come contattarci</ons-list-item>
+    <ons-dialog id="dialog-1">
+    <div style="text-align: center; padding: 10px;">
+      <p>
+        Viene usata per localizzare i pericoli e i luoghi di pericolo
+      <p>
+
+      <p>
+        <ons-button onclick="hideDialog('dialog-1')">Close</ons-button>
+      </p>
+    </div>
+  </ons-dialog>
+
+  <ons-dialog id="dialog-2">
+  <div style="text-align: center; padding: 10px;">
+    <p>
+       In base alla necessità posizionare i segnali preforniti con il segnale apposito nel luogo di pericolo
+    <p>
+
+    <p>
+      <ons-button onclick="hideDialog('dialog-2')">Close</ons-button>
+    </p>
+  </div>
+</ons-dialog>
+
+<ons-dialog id="dialog-3">
+<div style="text-align: center; padding: 10px;">
+  <p>
+    FormaUrbis
+  <p>
+
+  <p>
+    <ons-button onclick="hideDialog('dialog-3')">Close</ons-button>
+  </p>
+</div>
+</ons-dialog>
+
+<ons-dialog id="dialog-4">
+<div style="text-align: center; padding: 10px;">
+  <p>
+    Non contattateci,grazie
+  <p>
+
+  <p>
+    <ons-button onclick="hideDialog('dialog-4')">Close</ons-button>
+  </p>
+</div>
+</ons-dialog>
+
+<ons-dialog id="dialog-passwordcorretta">
+<div style="text-align: center; padding: 10px;">
+  <p>
+    La password è stata cambiata con successo
+  <p>
+
+  <p>
+    <ons-button onclick="hideDialog('dialog-passwordcorretta')">Close</ons-button>
+  </p>
+</div>
+</ons-dialog>
+
+<ons-dialog id="dialog-passwordnoncorretta">
+<div style="text-align: center; padding: 10px;">
+  <p>
+     Password non esatta
+  <p>
+
+  <p>
+    <ons-button onclick="hideDialog('dialog-passswordnoncorretta')">Close</ons-button>
+  </p>
+</div>
+</ons-dialog>
+</div>
+</ons-list>
+</ons-page>
+</ons-template>
+
+    <ons-template id="signal.html">
+      <ons-page>
+        <ons-toolbar>
+          <div class="left">
+            <ons-toolbar-button ng-click="app.toggle()">
+              <ons-icon icon="md-menu"></ons-icon>
+            </ons-toolbar-button>
+          </div>
+          </ons-toolbar>
+          <div class="center">
+      <img class="button" src="Signal/exclamation.png"/  tappable onclick="showDialog('dialog-pericolo')" >
+  <img class="button" src="Signal/burn.png"/  tappable onclick="showDialog('dialog-incendio')" >
+<img class="button" src="Signal/chinese.png"/  tappable onclick="showDialog('dialog-chinese')" >
+<img class="button" src="Signal/garbage.png"/  tappable onclick="showDialog('dialog-rifiuti')" >
+<ons-alert-dialog id="dialog-pericolo">
+  <div class="alert-dialog-title">Pericolo</div>
+  <div class="alert-dialog-content">
+     Viene usato segnare luoghi di pericolo.
+     Vuoi aggiungere il segnale?
+  </div>
+  <div class="alert-dialog-footer">
+    <button class="alert-dialog-button" onclick="aggiungiicona('garbage')">OK</button>
+    <button class="alert-dialog-button" onclick="hideDialog('dialog-pericolo')">Cancel</button>
+  </div>
+</ons-alert-dialog>
+
+<ons-alert-dialog id="dialog-incendio">
+  <div class="alert-dialog-title">INCENDIO</div>
+  <div class="alert-dialog-content">
+     Viene usato per localizzare gli incendi.
+     Vuoi aggiungere il segnale?
+  </div>
+  <div class="alert-dialog-footer">
+    <button class="alert-dialog-button" onclick="hideDialog('dialog-incendio')">OK</button>
+    <button class="alert-dialog-button" onclick="hideDialog('dialog-incendio')">Cancel</button>
+  </div>
+</ons-alert-dialog>
+
+<ons-alert-dialog id="dialog-rifiuti">
+  <div class="alert-dialog-title">RIFIUTI</div>
+  <div class="alert-dialog-content">
+   Viene usato per segnalare rifiuti fuori dalla spazzatura.
+   Vuoi aggiungere il segnale?
+  </div>
+  <div class="alert-dialog-footer">
+    <button class="alert-dialog-button" onclick="hideDialog('dialog-rifiuti')">OK</button>
+    <button class="alert-dialog-button" onclick="hideDialog('dialog-rifiuti')">Cancel</button>
+  </div>
+</ons-alert-dialog>
+
+<ons-alert-dialog id="dialog-chinese">
+  <div class="alert-dialog-title">CHINESE</div>
+  <div class="alert-dialog-content">
+   Attenzione cinese.
+   Vuoi inviare un sicario per uccidere il cinese?
+  </div>
+  <div class="alert-dialog-footer">
+    <button class="alert-dialog-button" onclick="hideDialog('dialog-chinese')">OK</button>
+    <button class="alert-dialog-button" onclick="hideDialog('dialog-chinese')">Cancel</button>
+  </div>
+</ons-alert-dialog>
+
+
+
+
+</body>
+</html>
